@@ -1,0 +1,8 @@
+[package]
+name = "super_cool_messenger"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ecies = {version = "0.2.10", default-features = false, features = ["std", "aes-rust"]}
+base64 = "0.22.1"
