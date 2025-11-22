@@ -24,8 +24,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Mode selected : {mode:?}");
 
-
-
     let (self_priv, other_pub):(Option<Vec<u8>>, Option<Vec<u8>>) = match mode {
         Decrypt => {
             let mut private_self = String::new();
@@ -69,33 +67,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         println!("{}", match mode {
             Encrypt => {
-                match other_pub {
-                    Some(ref other_pub) => {
-                        let mut message = String::new();
-                        println!("Enter message: ");
-                        std::io::stdin().read_line(&mut message)?;
-                        let message = message.trim().to_string();
+                if let Some(public) = &other_pub {
+                    let mut message = String::new();
+                    println!("Enter message: ");
+                    std::io::stdin().read_line(&mut message)?;
+                    let message = message.trim().to_string();
 
-                        base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(other_pub, message.as_bytes()).unwrap())
-                    }
-                    None=>"ti eblan".to_string()
-                }
-
+                    base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&public, message.as_bytes()).unwrap())
+                } else { "error with public key".to_string() }
 
             }
             Decrypt => {
-                match self_priv {
-                    Some(ref self_priv) => {
-                        let mut message = String::new();
-                        println!("Enter encrypted message: ");
-                        std::io::stdin().read_line(&mut message)?;
-                        let message = base64::engine::general_purpose::STANDARD.decode(message.trim().to_string())?;
+                if let Some(private) = &self_priv {
+                    let mut message = String::new();
+                    println!("Enter encrypted message: ");
+                    std::io::stdin().read_line(&mut message)?;
+                    let message = base64::engine::general_purpose::STANDARD.decode(message.trim().to_string())?;
 
-                        String::from_utf8(ecies::decrypt(self_priv, &message).unwrap())?
-                    }
-                    None=>"ti eblan".to_string()
-                }
-
+                    String::from_utf8(ecies::decrypt(private, &message).unwrap())?
+                } else { "error with private key".to_string() }
             }
 
             Bisexual => {
@@ -106,17 +96,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 std::io::stdin().read_line(&mut message)?;
 
                 match message.chars().nth(0).unwrap() {
-                    '?'=>{
-                        let message = base64::engine::general_purpose::STANDARD.decode(message[1..].trim().to_string())?;
-                        println!("Decrypted message:");
-                        String::from_utf8(ecies::decrypt(&self_priv.clone().unwrap(), &message).unwrap())?
-
-                    }
                     '#'=>{
-                        println!("Encrypted message:");
-                        base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&other_pub.clone().unwrap(), message[1..].as_bytes()).unwrap())
+                        if let Some(public) = &other_pub {
+                            let message = base64::engine::general_purpose::STANDARD.decode(message[1..].trim().to_string())?;
+                            let message = String::from_utf8(ecies::decrypt(&public, &message).unwrap())?;
+                            format!("{message}")
+                        } else {
+                            "error while parsing bisexual message".to_string()
+                        }
                     }
-                    _=>{"ti eblan".to_string()}
+                    '?'=>{
+                        if let Some(private) = &self_priv {
+                            format!(
+                                "{}",
+                                base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&private, message[1..].as_bytes()).unwrap())
+                            )
+                        } else {
+                            "error while parsing bisexual message".to_string()
+                        }
+                    }
+                    _=> { "error while parsing bisexual message".to_string() }
                 }
             }
         })
