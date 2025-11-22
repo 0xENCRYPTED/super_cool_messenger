@@ -2,6 +2,7 @@ use std::str::FromStr;
 use base64::Engine;
 use crate::Mode::{Decrypt, Encrypt};
 
+#[derive(Debug)]
 enum Mode {
     Encrypt,
     Decrypt
@@ -18,12 +19,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => panic!("Unknown mode inserted")
     };
 
+    println!("Mode selected : {mode:?}");
+
     let key = match mode {
         Decrypt => {
             let mut private_self = String::new();
             println!("Insert your private key: ");
             std::io::stdin().read_line(&mut private_self)?;
             let private_self = base64::engine::general_purpose::STANDARD.decode(private_self.trim())?;
+
+            println!("Accepted");
 
             private_self
         }
@@ -32,6 +37,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Insert other public key: ");
             std::io::stdin().read_line(&mut public_other)?;
             let public_other = base64::engine::general_purpose::STANDARD.decode(public_other.trim())?;
+
+            println!("Accepted");
 
             public_other
         }
@@ -45,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 std::io::stdin().read_line(&mut message)?;
                 let message = message.trim().to_string();
 
-                base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&key, message.as_bytes()).map_err(|_|"Unknown err")?)
+                base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&key, message.as_bytes()).unwrap())
             }
             Decrypt => {
                 let mut message = String::new();
@@ -53,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 std::io::stdin().read_line(&mut message)?;
                 let message = base64::engine::general_purpose::STANDARD.decode(message.trim().to_string())?;
 
-                String::from_utf8(ecies::decrypt(&key, &message).map_err(|_|"Unknown err")?)?
+                String::from_utf8(ecies::decrypt(&key, &message).unwrap())?
             }
         })
     }
