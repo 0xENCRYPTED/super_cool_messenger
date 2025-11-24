@@ -96,20 +96,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 std::io::stdin().read_line(&mut message)?;
 
                 match message.chars().nth(0).unwrap() {
-                    '#'=>{
-                        if let Some(public) = &other_pub {
+                    '?'=>{
+                        if let Some(private) = &self_priv {
                             let message = base64::engine::general_purpose::STANDARD.decode(message[1..].trim().to_string())?;
-                            let message = String::from_utf8(ecies::decrypt(&public, &message).unwrap())?;
+                            let message = String::from_utf8(ecies::decrypt(&private, &message).unwrap())?;
                             format!("{message}")
                         } else {
                             "error while parsing bisexual message".to_string()
                         }
                     }
-                    '?'=>{
-                        if let Some(private) = &self_priv {
+                    '#'=>{
+                        if let Some(public) = &other_pub {
                             format!(
                                 "{}",
-                                base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&private, message[1..].as_bytes()).unwrap())
+                                base64::engine::general_purpose::STANDARD.encode(ecies::encrypt(&public, message[1..].as_bytes()).unwrap())
                             )
                         } else {
                             "error while parsing bisexual message".to_string()
